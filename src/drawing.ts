@@ -14,7 +14,7 @@ interface Point {
 }
 
 interface Shape {
-  onPaint(ctx: CanvasRenderingContext2D)
+  onPaint(ctx: CanvasRenderingContext2D): void;
 }
 
 class Line implements Shape {
@@ -50,6 +50,236 @@ interface RectByPoints {
   p1: Point;
   p2: Point;
 }
+class View {
+  properties: {lineWidth: number, lineColor: string};
+  shapes: Shape[] = [];
+  currentKey: string = "line";
+  drawing: HTMLCanvasElement;
+
+  constructor() {
+    this.drawing = document.getElementById("drawing") as HTMLCanvasElement; 
+    this.currentKey = "";
+
+    this.properties = {
+      lineWidth: 1,
+      lineColor: "black"
+    };
+  }
+
+  getLineStyle() {
+    return new LineStyle(this.properties.lineWidth, this.properties.lineColor);
+  }
+
+  addShape(shape: Shape) {
+    if (shape != null) {
+      this.shapes.push(shape);
+    }
+  }
+
+  invalidate(reserved: RectByPoints| null) {
+    let ctx:CanvasRenderingContext2D = this.drawing.getContext("2d")!;
+    let bound = this.drawing.getBoundingClientRect();
+
+    ctx.clearRect(0, 0, bound.width, bound.height);
+    console.log(reserved)
+
+    this.onPaint(ctx);
+  }
+
+  onPaint(ctx: CanvasRenderingContext2D) {
+    let shapes = this.shapes;
+
+    for (let i in shapes) {
+      shapes[i].onPaint(ctx);
+    }
+
+    switch(this.currentKey) {
+      case "PathCreator":
+        if (pathCreator.started) {
+          let props = this.properties;
+          ctx.lineWidth = props.lineWidth;
+          ctx.strokeStyle = props.lineColor;
+          ctx.beginPath();
+          ctx.moveTo(pathCreator.fromPos.x, pathCreator.fromPos.y);
+          for (let i in pathCreator.points) {
+            ctx.lineTo(pathCreator.points[i].x, pathCreator.points[i].y);
+          }
+          ctx.lineTo(pathCreator.toPos.x, pathCreator.toPos.y);
+          if (pathCreator.close) {
+            ctx.closePath();
+          }
+          ctx.stroke();
+        }
+        return;
+      case "RectCreator": 
+      case "LineCreator":
+      case "EllipseCreator":
+      case "CircleCreator":
+        if (rectCreator.started) {
+          rectCreator.buildShape().onPaint(ctx);
+        }
+    }
+  }
+
+  mousedown(event: MouseEvent) {
+
+    switch(this.currentKey) {
+      case "PathCreator":
+        pathCreator.toPos = this.getMousePos(event)
+        if (pathCreator.started) {
+          pathCreator.points.push(pathCreator.toPos);
+        } else {
+          pathCreator.fromPos = pathCreator.toPos;
+          pathCreator.started = true;
+        }
+        this.invalidate(null);
+        return;
+      case "RectCreator":
+      case "LineCreator":
+      case "EllipseCreator":
+      case "CircleCreator":
+        rectCreator.rect.p1 = this.getMousePos(event);
+        rectCreator.started = true;
+        return;
+    }
+  }
+
+  mousemove(event: MouseEvent) {
+    // let pos = this.getMousePos(event);
+    console.log(event);
+    switch(this.currentKey) {
+      case "PathCreator":
+        if (pathCreator.started) {
+          pathCreator.toPos = this.getMousePos(event)
+          this.invalidate(null);
+        }
+        return;
+      case "RectCreator":
+      case "LineCreator":
+      case "EllipseCreator":
+      case "CircleCreator":
+        rectCreator.rect.p2 = this.getMousePos(event);
+        this.invalidate(rectCreator.rect);
+        return;
+    }
+  }
+
+  getMousePos(event: MouseEvent) {
+    return {
+      x: event.offsetX,
+      y: event.offsetY
+    }
+  }
+
+  mouseup(event: MouseEvent) {
+    switch(this.currentKey) {
+      case "PathCreator": 
+        return;
+      case "RectCreator":
+      case "LineCreator":
+      case "EllipseCreator":
+      case "CircleCreator": 
+        rectCreator.rect.p2 = this.getMousePos(event)
+        this.addShape(rectCreator.buildShape() as Shape);
+        rectCreator.reset();
+    }
+  }
+
+  dblclick(event:MouseEvent) {
+    event.preventDefault();
+    switch(this.currentKey) {
+      case "PathCreator":
+        if (pathCreator.started) {
+          this.addShape(pathCreator.buildShape());
+          pathCreator.reset();
+        }
+        return;
+    }
+  }
+
+  attachCanvas(canvas: HTMLCanvasElement) {
+    console.log(canvas);
+    canvas.onmouseup = this.mouseup;
+    canvas.onmousedown = this.mousedown;
+    canvas.onmousemove = this.mousemove;
+    canvas.ondblclick = this.dblclick;
+
+  }
+}
+
+const view = new View();
+export default view;
+
+class PathCreator {
+  fromPos: Point;
+  toPos: Point;
+  points: Point[] = [];
+  started: boolean = false;
+  close: boolean = false;
+
+  constructor() {
+    this.fromPos = this.toPos = {x:0, y:0};
+  }
+  reset() {
+    this.points = [];
+    this.started = false;
+  }
+
+  buildShape() {
+    // TODO: to be finished
+    return new Path(this.points, this.close, view.getLineStyle());
+  }
+}
+
+class RectCreator {
+  rect: RectByPoints = {p1: {x:0, y:0}, p2:{x:0, y:0}};
+  started: boolean = false;
+  shapeType: String = "line";
+
+  reset() {
+    this.started = false;
+    view.invalidate(this.rect!)
+  }
+
+  buildShape() {
+    let rect = this.rect;
+    let r = this.normalizeRect(rect!);
+    switch(this.shapeType) {
+      case "line":
+        return new Line(rect.p1, rect.p2, view.getLineStyle());
+      case "rect":
+        return new Rect(r, view.getLineStyle());
+      default:
+        alert("unknown shapetype");
+        return new Line(rect.p1, rect.p2, view.getLineStyle());
+    }
+
+  }
+
+  normalizeRect(rect: RectByPoints) : RectByLength{
+    let x = rect.p1.x;
+    let y = rect.p1.y;
+
+    let width = rect.p2.x - x;
+    let height = rect.p2.y - y;
+
+    if (width < 0) {
+      x = rect.p2.x;
+      width = - width;
+    }
+
+    if (height < 0) {
+      y = rect.p2.y;
+      height = - height;
+    }
+
+    return {x, y, width, height};
+  }
+
+} 
+
+const pathCreator = new PathCreator();
+const rectCreator = new RectCreator();
 
 class Rect implements Shape {
 
@@ -106,7 +336,7 @@ class Path implements Shape {
       ctx.lineTo(points[i].x, points[i].y);
     }
 
-    if (close) {
+    if (this.close) {
       ctx.closePath();
     }
 
@@ -114,209 +344,5 @@ class Path implements Shape {
   }
 
 }
-
-class View {
-  properties: { };
-  shapes: Shape[];
-  currentKey: string = "line";
-  drawing: HTMLCanvas
-
-  constructor() {
-    this.darwing = document.getElementById("drawing");
-    this.currentKey = "";
-
-    this.properties = {
-      lineWidth: 1,
-      lineColor: "black"
-    };
-  }
-
-  getLineStyle() {
-    return new LineStyle(properties.lineWidth, properties.lineColor);
-  }
-
-  addShape(shape: Shape) {
-    if (shape != null) {
-      shapes.push(shape);
-    }
-  }
-
-  invalidate(reserved) {
-    let ctx = drawing.getContext("2d");
-    let bound = drawing.getBoundingClientRect();
-
-    ctx.clearRect(0, 0, bound.width, bound.height);
-
-    onPaint(ctx);
-  }
-
-  onPaint(ctx: CanvasRenderingContext2D) {
-    let shapes = view.shapes;
-
-    for (let i in shapes) {
-      shapes[i].onpaint(ctx);
-    }
-
-    switch(view.currentKey) {
-      case "PathCreator":
-        if (pathCreator.started) {
-          let props = properties;
-          ctx.lineWidth = props.lineWidth;
-          ctx.strokeStyle = props.lineColor;
-          ctx.beginPath();
-          ctx.moveTo(pathCreator.fromPos.x, pathCreator.fromPos.y);
-          for (let i in pathCreator.points) {
-            ctx.lineTo(pathCreator.points[i].x, pathCreator.points[i].y);
-          }
-          ctx.lineTo(pathCreator.toPos.x, pathCreator.toPos.y);
-          if (pathCreator.close) {
-            ctx.closePath();
-          }
-          ctx.stroke();
-        }
-        return;
-      case "RectCreator": 
-      case "LineCreator":
-      case "EllipseCreator":
-      case "CircleCreator":
-        if (rectCreator.started) {
-          rectCreator.buildShape().onpaint(ctx);
-        }
-    }
-  }
-
-  mousedown(event) {
-
-    switch(this.currentKey) {
-      case "PathCreator":
-        pathCreator.toPos = getMousePos(event)
-        if (pathCreator.started) {
-          pathCreator.points.push(pathCreator.toPos);
-        } else {
-          pathCreator.fromPos = pathCreator.toPos;
-          pathCreator.started = true;
-        }
-        invalidate();
-        return;
-      case "RectCreator":
-      case "LineCreator":
-      case "EllipseCreator":
-      case "CircleCreator":
-        rectCreator.rect.p1 = getMousePos(event);
-        rectCreator.started = true;
-        return;
-    }
-  }
-
-  mousemove(event) {
-    let pos = getMousePos(event);
-    switch(currentKey) {
-      case "PathCreator":
-        if (pathCreator.started) {
-          pathCreator.toPos = getMousePos(event)
-          invalidate();
-        }
-        return;
-      case "RectCreator":
-      case "LineCreator":
-      case "EllipseCreator":
-      case "CircleCreator":
-        rectCreator.rect.p2 = getMousePos(event);
-        invalidate(rectCreator.rect);
-        return;
-    }
-  }
-
-  mouseup(event) {
-    switch(currentKey) {
-      case "PathCreator": 
-        return;
-      case "RectCreator":
-      case "LineCreator":
-      case "EllipseCreator":
-      case "CircleCreator": 
-        rectCreator.rect.p2 = getMousePos(event)
-        addShape(rectCreator.buidShape());
-        rectCreator.reset();
-    }
-  }
-
-  dblclick(event) {
-    event.preventDefault();
-    switch(currentKey) {
-      case "PathCreator":
-        if (pathCreator.started) {
-          qview.addShape(pathCreator.buildShape());
-          pathCreator.reset();
-        }
-        return;
-    }
-  }
-}
-
-export default view = new View();
-const pathCreator = new PathCreator();
-const rectCreator = new RectCreator();
-
-class PathCreator {
-  points: Point[];
-  started: boolean = false;
-
-  reset() {
-    points = [];
-    started = fasle;
-  }
-
-  buildShape() {
-    // TODO: to be finished
-    return new Path(points, getLineStyle());
-  }
-}
-
-class RectCreator {
-  rect: RectByPoints;
-  started: boolean;
-  shapeType: String = "line";
-
-  reset() {
-    this.started = false;
-    invalidate(this.rect)
-  }
-
-  buildShape() {
-    let rect = this.rect;
-    let r = normalizeRect(rect);
-    switch(this.shapeType) {
-      case "line":
-        return new Line(rect.p1, rect.p2, getLineStyle());
-      case "rect":
-        return new Rect(r, getLineStyle());
-      default:
-        alert("unknown shapetype");
-    }
-
-  }
-
-  normalizeRect(rect: RectByPoints) {
-    let x = rect.p1.x;
-    let y = rect.p1.y;
-
-    let width = rect.p2.x - x;
-    let height = rect.p2.y - y;
-
-    if (width < 0) {
-      x = rect.p2.x;
-      width = - width;
-    }
-
-    if (height < 0) {
-      y = rect.p2.y;
-      height = - height;
-    }
-
-    return new RectByLength(x, y, width, length);
-  }
-
-} 
 
 
