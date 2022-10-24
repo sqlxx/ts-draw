@@ -39,7 +39,7 @@ class Line implements Shape {
   }
 }
 
-interface RectByLength {
+interface RectByWH {
   x: number;
   y: number;
   width: number;
@@ -53,12 +53,12 @@ interface RectByPoints {
 class View {
   properties: {lineWidth: number, lineColor: string};
   shapes: Shape[] = [];
-  currentKey: string = "line";
+  currentKey: string;
   drawing: HTMLCanvasElement;
 
   constructor() {
     this.drawing = document.getElementById("drawing") as HTMLCanvasElement; 
-    this.currentKey = "";
+    this.currentKey = "PathCreator";
 
     this.properties = {
       lineWidth: 1,
@@ -76,12 +76,11 @@ class View {
     }
   }
 
-  invalidate(reserved: RectByPoints| null) {
+  invalidate(area: RectByWH| null) {
     let ctx:CanvasRenderingContext2D = this.drawing.getContext("2d")!;
     let bound = this.drawing.getBoundingClientRect();
-
+    console.log(area);
     ctx.clearRect(0, 0, bound.width, bound.height);
-    console.log(reserved)
 
     this.onPaint(ctx);
   }
@@ -122,7 +121,7 @@ class View {
   }
 
   mousedown(event: MouseEvent) {
-
+    console.log(this.currentKey)
     switch(this.currentKey) {
       case "PathCreator":
         pathCreator.toPos = this.getMousePos(event)
@@ -146,7 +145,6 @@ class View {
 
   mousemove(event: MouseEvent) {
     // let pos = this.getMousePos(event);
-    console.log(event);
     switch(this.currentKey) {
       case "PathCreator":
         if (pathCreator.started) {
@@ -159,7 +157,7 @@ class View {
       case "EllipseCreator":
       case "CircleCreator":
         rectCreator.rect.p2 = this.getMousePos(event);
-        this.invalidate(rectCreator.rect);
+        this.invalidate(rectCreator.normalizeRect(rectCreator.rect));
         return;
     }
   }
@@ -197,14 +195,38 @@ class View {
     }
   }
 
+  changeShape(shapeId:string) {
+    console.log("the shapeId is ", shapeId)
+    switch(shapeId) {
+      case "path":
+        this.currentKey = "PathCreator";
+        pathCreator.reset();
+        return;
+      case "line":
+        this.currentKey = "LineCreator";
+        rectCreator.reset();
+        rectCreator.shapeType = shapeId;
+      case "rect":
+        this.currentKey = "RectCreator";
+        rectCreator.reset();
+        rectCreator.shapeType = shapeId;
+    }
+    
+  }
+
   attachCanvas(canvas: HTMLCanvasElement) {
-    console.log(canvas);
-    canvas.onmouseup = this.mouseup;
-    canvas.onmousedown = this.mousedown;
-    canvas.onmousemove = this.mousemove;
-    canvas.ondblclick = this.dblclick;
+    this.drawing = canvas; 
+    canvas.onmouseup = (event) => this.mouseup(event);
+    canvas.onmousedown = (event) => this.mousedown(event);
+    canvas.onmousemove = (event) => this.mousemove(event);
+    canvas.ondblclick = (event) => this.dblclick(event);
 
   }
+
+  attachMenu(menu: HTMLDivElement) {
+    (menu.querySelector("#shapes") as HTMLSelectElement).onchange = (event) => this.changeShape((event.currentTarget as HTMLSelectElement).value) ;
+  }
+
 }
 
 const view = new View();
@@ -227,18 +249,23 @@ class PathCreator {
 
   buildShape() {
     // TODO: to be finished
-    return new Path(this.points, this.close, view.getLineStyle());
+    let points = [{x: this.fromPos.x, y: this.fromPos.y}];
+    for (let i in this.points) {
+      points.push(this.points[i])
+    } 
+    return new Path(points, this.close, view.getLineStyle());
   }
 }
 
 class RectCreator {
   rect: RectByPoints = {p1: {x:0, y:0}, p2:{x:0, y:0}};
   started: boolean = false;
-  shapeType: String = "line";
+  shapeType: String = "rect";
 
   reset() {
     this.started = false;
-    view.invalidate(this.rect!)
+    let r = this.normalizeRect(this.rect);
+    view.invalidate(r);
   }
 
   buildShape() {
@@ -256,7 +283,7 @@ class RectCreator {
 
   }
 
-  normalizeRect(rect: RectByPoints) : RectByLength{
+  normalizeRect(rect: RectByPoints) : RectByWH{
     let x = rect.p1.x;
     let y = rect.p1.y;
 
@@ -289,7 +316,7 @@ class Rect implements Shape {
   height: number;
   lineStyle: LineStyle;
 
-  constructor(rect: RectByLength, lineStyle: LineStyle) {
+  constructor(rect: RectByWH, lineStyle: LineStyle) {
       this.x = rect.x;
       this.y = rect.y;
       this.width = rect.width;
@@ -344,5 +371,7 @@ class Path implements Shape {
   }
 
 }
+
+
 
 
