@@ -144,11 +144,12 @@ class View {
   }
 
   mousemove(event: MouseEvent) {
-    // let pos = this.getMousePos(event);
+    let pos = this.getMousePos(event);
+    document.getElementById("pos")!.innerText = `x: ${pos.x}, y: ${pos.y}`;
     switch(this.currentKey) {
       case "PathCreator":
         if (pathCreator.started) {
-          pathCreator.toPos = this.getMousePos(event)
+          pathCreator.toPos = pos; 
           this.invalidate(null);
         }
         return;
@@ -156,7 +157,7 @@ class View {
       case "LineCreator":
       case "EllipseCreator":
       case "CircleCreator":
-        rectCreator.rect.p2 = this.getMousePos(event);
+        rectCreator.rect.p2 = pos;
         this.invalidate(rectCreator.normalizeRect(rectCreator.rect));
         return;
     }
@@ -210,6 +211,15 @@ class View {
         this.currentKey = "RectCreator";
         rectCreator.reset();
         rectCreator.shapeType = shapeId;
+      case "circle":
+        this.currentKey = "RectCreator";
+        rectCreator.reset();
+        rectCreator.shapeType = shapeId;
+      case "ellipse":
+        this.currentKey = "RectCreator";
+        rectCreator.reset();
+        rectCreator.shapeType = shapeId;
+
     }
     
   }
@@ -248,7 +258,6 @@ class PathCreator {
   }
 
   buildShape() {
-    // TODO: to be finished
     let points = [{x: this.fromPos.x, y: this.fromPos.y}];
     for (let i in this.points) {
       points.push(this.points[i])
@@ -276,6 +285,10 @@ class RectCreator {
         return new Line(rect.p1, rect.p2, view.getLineStyle());
       case "rect":
         return new Rect(r, view.getLineStyle());
+      case "ellipse":
+        return new Ellipse({x: r.x + r.width/2, y: r.y + r.height/2}, r.width/2, r.height/2, view.getLineStyle());
+      case "circle":
+        return new Ellipse({x: r.x + r.width/2, y: r.y + r.height/2}, r.width/2, r.width/2, view.getLineStyle());
       default:
         alert("unknown shapetype");
         return new Line(rect.p1, rect.p2, view.getLineStyle());
@@ -368,6 +381,30 @@ class Path implements Shape {
     }
 
     ctx.stroke();
+  }
+
+}
+
+class Ellipse implements Shape {
+  lineStyle: LineStyle;
+  center: Point;
+  radiusX: number;
+  radiusY: number;
+
+  constructor(center: Point, radiusX: number, radiusY: number, lineStyle: LineStyle) {
+    this.lineStyle = lineStyle;
+    this.center = center;
+    this.radiusX = radiusX;
+    this.radiusY = radiusY;
+  }
+
+  onPaint(ctx: CanvasRenderingContext2D): void {
+    ctx.lineWidth = this.lineStyle.width;
+    ctx.strokeStyle = this.lineStyle.color;
+    ctx.beginPath();
+    ctx.ellipse(this.center.x, this.center.y, this.radiusX, this.radiusY, 0, 0, 2* Math.PI)
+    ctx.stroke();
+
   }
 
 }
