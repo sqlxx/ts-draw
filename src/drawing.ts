@@ -408,7 +408,3 @@ class Ellipse implements Shape {
   }
 
 }
-
-
-
-
