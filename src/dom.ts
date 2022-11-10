@@ -1,27 +1,25 @@
-interface SPoint {
+export type SPoint = { 
     x: number;
     y: number;
 }
 
-interface Shape {
+export interface Shape {
     onPaint(ctx: CanvasRenderingContext2D): void;
 }
 
-interface RegionByHW {
+export type RegionByHW = {
     x: number;
     y: number;
     height: number;
     width: number;
 }
 
-interface RegionByPts {
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
+export type RegionByPts = {
+    pt1: SPoint;
+    pt2: SPoint;
 }
 
-class SLineStyle {
+export class SLineStyle {
     width: number;
     color: string;
 
@@ -31,7 +29,7 @@ class SLineStyle {
     }
 }
 
-class SLine implements Shape {
+export class SLine implements Shape {
     pt1: SPoint;
     pt2: SPoint;
     lineStyle: SLineStyle;
@@ -53,7 +51,7 @@ class SLine implements Shape {
     }
 }
 
-class SRect implements Shape {
+export class SRect implements Shape {
     rect: RegionByHW;
     lineStyle: SLineStyle;
 
@@ -74,17 +72,17 @@ class SRect implements Shape {
 
 }
 
-class SEllipse implements Shape {
+export class SEllipse implements Shape {
 
     center: SPoint;
     radiusX: number;
     radiusY: number;
     lineStyle: SLineStyle;
     
-    constructor(center: SPoint, ridusX: number, ridusY: number, lineStyle: SLineStyle) {
+    constructor(center: SPoint, radiusX: number, radiusY: number, lineStyle: SLineStyle) {
         this.center = center;
-        this.radiusX = ridusX;
-        this.radiusY = ridusY;
+        this.radiusX = radiusX;
+        this.radiusY = radiusY;
         this.lineStyle = lineStyle;
 
     }
@@ -100,7 +98,7 @@ class SEllipse implements Shape {
 
 }
 
-class SPath implements Shape {
+export class SPath implements Shape {
     points: SPoint[];
     lineStyle: SLineStyle;
 

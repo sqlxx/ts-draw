@@ -1,20 +1,35 @@
+import RectCreator from './creator/controller';
 import './style.css'
-import './drawing'
-import view from './drawing'
-
-document.querySelector<HTMLDivElement>('#canvas')!.innerHTML = `
-  <canvas id="drawing" width="1024" height="661">您的浏览器不支持Canvas</canvas>
-`
+import SView from './view';
 
 document.querySelector<HTMLDivElement>('#menu')!.innerHTML = `
-  <select name="shapes" id="shapes">
-    <option value="path">Path</option>
-    <option value="line">Line</option>
-    <option value="rect">Rect</option>
-    <option value="circle">Circle</option>
-    <option value="ellipse">Ellipse</option>
-  </select>
+  <input type="button" id="LineCreator" value = "画线" style="visibility:hidden">
+  <input type="button" id="RectCreator" value = "画矩形" style="visibility:hidden">
+  <input type="button" id="EllipseCreator" value = "画椭圆" style="visibility:hidden">
+  <input type="button" id="CircleCreator" value = "画圆" style="visibility:hidden">
+  
 `
 
-view.attachCanvas(document.querySelector('#drawing') as HTMLCanvasElement);
-view.attachMenu(document.querySelector("#menu") as HTMLDivElement);
+var view = new SView();
+view.registerController("LineCreator", new RectCreator(view, "line"));
+view.registerController("RectCreator", new RectCreator(view, "rect"));
+view.registerController("EllipseCreator", new RectCreator(view, "ellipse"));
+view.registerController("CircleCreator", new RectCreator(view, "circle"));
+
+console.log("controllers registered");
+for (let key of view.controllers.keys()) {
+  console.log(key)
+  let ele = document.getElementById(key);
+  if (ele != null) {
+    ele.style.visibility = "visible";
+    ele.onclick = function() {
+      if (view._currentKey != "") {
+        document.getElementById(view._currentKey)?.removeAttribute("style");
+      }
+
+      ele!.style.borderColor = "blue";
+      ele?.blur();
+      view.invokeController(key);
+    }
+  }
+}
