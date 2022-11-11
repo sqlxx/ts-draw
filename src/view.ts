@@ -1,5 +1,5 @@
 import SPaintDoc,{SPoint, SLineStyle}  from "./dom";
-import SController from "./creator/controller";
+import SController from "./creator/rect_creator";
 
 class SView {
     properties = {lineWidth: 1, lineColor: "black"};
@@ -64,7 +64,7 @@ class SView {
             console.log((event.key));
 
             switch(event.key) {
-                case "9": case "13": case "27":
+                case "Escape": 
                     event.preventDefault()
             }
 

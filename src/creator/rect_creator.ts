@@ -1,19 +1,6 @@
 import SView from "../view";
 import {RegionByPts, Shape, SRect, SEllipse, RegionByHW, SLine} from "../dom";
 
-interface SController {
-    // paint the current temp shape
-
-    onPaint(ctx:CanvasRenderingContext2D): void;
-    stop():void;
-    onDblClick(event:Event): void;
-    onMouseMove(event: Event): void;
-    onMouseUp(event: Event): void;
-    onMouseDown(event: Event): void;
-    onKeyDown(event: Event): void;
-    start():void;
-}
-
 // Support create rectangle, circle, ellipse
 class RectCreator implements SController {
 
@@ -26,8 +13,12 @@ class RectCreator implements SController {
         this.started = false;
         this.view = view;
         this.shapeType = shapeType;
-        this.reset();
+        this.rect = {
+            pt1: {x: 0, y: 0},
+            pt2: {x: 0, y: 0}
+        }     
     }
+
     reset(): void {
         this.rect = {
             pt1: {x: 0, y: 0},
@@ -39,11 +30,15 @@ class RectCreator implements SController {
         this.view.onMouseMove = function(event) {ctrl.onMouseMove(event)};
         this.view.onMouseUp = function(event) {ctrl.onMouseUp(event)};
         this.view.onMouseDown = function(event) {ctrl.onMouseDown(event)};
-        this.view.onKeyDown = function(event) { ctrl.onKeyDown(event)}
+        this.view.onKeyDown = function(event) { ctrl.onKeyDown(event as KeyboardEvent)}
     }
-    onKeyDown(_event: Event): void {
+    onKeyDown(_event: KeyboardEvent): void {
         if (this.started) {
-            //TODO: esc to cancel the drawing
+            if(_event.key === 'Escape') {
+                this.reset();
+                this.started = false;
+                this.view.invalidate();
+            }
         }
     }
 
