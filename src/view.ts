@@ -1,4 +1,4 @@
-import SPaintDoc,{SPoint, SLineStyle}  from "./dom";
+import SPaintDoc,{SPoint, SShapeStyle}  from "./dom";
 import SController from "./controller";
 
 class SView {
@@ -104,7 +104,7 @@ class SView {
     }
 
     get lineStyle() {
-        return new SLineStyle(this.properties.lineWidth, this.properties.lineColor);
+        return new SShapeStyle(this.properties.lineWidth, this.properties.lineColor);
     }
 
     invokeController(name:string) {

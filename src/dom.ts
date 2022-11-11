@@ -19,30 +19,32 @@ export type RegionByPts = {
     pt2: SPoint;
 }
 
-export class SLineStyle {
-    width: number;
-    color: string;
+export class SShapeStyle {
+    lineWidth: number;
+    lineColor: string;
+    fillColor: string;
 
-    constructor(width: number, color: string) {
-        this.width = width;
-        this.color = color;
+    constructor(lineWidth: number, lineColor: string, fillColor: string) {
+        this.lineWidth = lineWidth;
+        this.lineColor = lineColor;
+        this.fillColor = fillColor;
     }
 }
 
 export class SLine implements Shape {
     pt1: SPoint;
     pt2: SPoint;
-    lineStyle: SLineStyle;
+    lineStyle: SShapeStyle;
 
-    constructor(pt1: SPoint, pt2: SPoint, lineStyle: SLineStyle) {
+    constructor(pt1: SPoint, pt2: SPoint, lineStyle: SShapeStyle) {
         this.pt1 = pt1;
         this.pt2 = pt2;
         this.lineStyle = lineStyle;
     }
 
     onPaint(ctx: CanvasRenderingContext2D): void {
-        ctx.lineWidth = this.lineStyle.width;
-        ctx.strokeStyle = this.lineStyle.color;
+        ctx.lineWidth = this.lineStyle.lineWidth;
+        ctx.strokeStyle = this.lineStyle.lineColor;
 
         ctx.beginPath();
         ctx.moveTo(this.pt1.x, this.pt1.y);
@@ -53,17 +55,17 @@ export class SLine implements Shape {
 
 export class SRect implements Shape {
     rect: RegionByHW;
-    lineStyle: SLineStyle;
+    lineStyle: SShapeStyle;
 
-    constructor(r: RegionByHW, lineStyle: SLineStyle) {
+    constructor(r: RegionByHW, lineStyle: SShapeStyle) {
         this.rect = r;
         this.lineStyle = lineStyle;
         
     }
 
     onPaint(ctx: CanvasRenderingContext2D): void {
-        ctx.lineWidth = this.lineStyle.width;
-        ctx.strokeStyle = this.lineStyle.color;
+        ctx.lineWidth = this.lineStyle.lineWidth;
+        ctx.strokeStyle = this.lineStyle.lineColor;
 
         ctx.beginPath();
         ctx.rect(this.rect.x, this.rect.y, this.rect.width, this.rect.height);
@@ -77,9 +79,9 @@ export class SEllipse implements Shape {
     center: SPoint;
     radiusX: number;
     radiusY: number;
-    lineStyle: SLineStyle;
+    lineStyle: SShapeStyle;
     
-    constructor(center: SPoint, radiusX: number, radiusY: number, lineStyle: SLineStyle) {
+    constructor(center: SPoint, radiusX: number, radiusY: number, lineStyle: SShapeStyle) {
         this.center = center;
         this.radiusX = radiusX;
         this.radiusY = radiusY;
@@ -88,8 +90,8 @@ export class SEllipse implements Shape {
     }
 
     onPaint(ctx: CanvasRenderingContext2D): void {
-        ctx.lineWidth = this.lineStyle.width;
-        ctx.strokeStyle = this.lineStyle.color;
+        ctx.lineWidth = this.lineStyle.lineWidth;
+        ctx.strokeStyle = this.lineStyle.lineColor;
 
         ctx.beginPath();
         ctx.ellipse(this.center.x, this.center.y, this.radiusX, this.radiusY, 0, 0, 360);
@@ -100,16 +102,16 @@ export class SEllipse implements Shape {
 
 export class SPath implements Shape {
     points: SPoint[];
-    lineStyle: SLineStyle;
+    lineStyle: SShapeStyle;
 
-    constructor(points: SPoint[], lineStyle: SLineStyle) {
+    constructor(points: SPoint[], lineStyle: SShapeStyle) {
         this.points = points;
         this.lineStyle = lineStyle;
     }
 
     onPaint(ctx: CanvasRenderingContext2D): void {
-        ctx.lineWidth = this.lineStyle.width;
-        ctx.strokeStyle = this.lineStyle.color;
+        ctx.lineWidth = this.lineStyle.lineWidth;
+        ctx.strokeStyle = this.lineStyle.lineColor;
 
         if (this.points.length > 1) {
             ctx.beginPath();

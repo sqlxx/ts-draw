@@ -1,5 +1,6 @@
 import SView from "../view";
 import {RegionByPts, Shape, SRect, SEllipse, RegionByHW, SLine} from "../dom";
+import SController from ".";
 
 // Support create rectangle, circle, ellipse
 class RectCreator implements SController {

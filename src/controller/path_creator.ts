@@ -1,5 +1,6 @@
 import SView from "../view";
 import { SPath, SPoint } from "../dom";
+import SController from ".";
 
 class PathCreator implements SController {
 
@@ -20,8 +21,8 @@ class PathCreator implements SController {
     }
     onPaint(ctx: CanvasRenderingContext2D): void {
         if (this.points.length > 0) {
-            ctx.strokeStyle = this.view.lineStyle.color;
-            ctx.lineWidth = this.view.lineStyle.width;
+            ctx.strokeStyle = this.view.lineStyle.lineColor;
+            ctx.lineWidth = this.view.lineStyle.lineWidth;
 
             ctx.beginPath();
             ctx.moveTo(this.points[0].x, this.points[0].y);
