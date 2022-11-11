@@ -5,6 +5,7 @@ export type SPoint = {
 
 export interface Shape {
     onPaint(ctx: CanvasRenderingContext2D): void;
+    isHit(pt:SPoint):boolean;
 }
 
 export type RegionByHW = {
@@ -22,13 +23,33 @@ export type RegionByPts = {
 export class SShapeStyle {
     lineWidth: number;
     lineColor: string;
-    fillColor: string;
+    // fillColor: string;
 
-    constructor(lineWidth: number, lineColor: string, fillColor: string) {
+    constructor(lineWidth: number, lineColor: string) {
         this.lineWidth = lineWidth;
         this.lineColor = lineColor;
-        this.fillColor = fillColor;
+        // this.fillColor = fillColor;
     }
+}
+
+function isHitLine(pt: SPoint, pt1: SPoint, pt2: SPoint, lineWidth: number): boolean {
+    if ((pt1.x - pt.x)*(pt.x - pt2.x) < 0) {
+        return false;
+    }
+
+    if ((pt1.y - pt.y)*(pt2.y - pt2.y) < 0) {
+        return false;
+    }
+
+    let a = pt2.y-pt1.y
+    let b = pt1.x-pt2.x
+    let c = pt2.x*pt1.y - pt1.x*pt2.y 
+    
+    // 使用点到线段的距离公式 |ax0+by0+c|/sqrt(a^2 + b^2)
+    let d = Math.abs(a*pt.x + b*pt.y+c)/Math.sqrt(a*a + b*b)
+
+    return lineWidth >= 2*(d-2)
+
 }
 
 export class SLine implements Shape {
@@ -40,6 +61,9 @@ export class SLine implements Shape {
         this.pt1 = pt1;
         this.pt2 = pt2;
         this.lineStyle = lineStyle;
+    }
+    isHit(pt: SPoint): boolean {
+        return isHitLine(pt, this.pt1, this.pt2, this.lineStyle.lineWidth);
     }
 
     onPaint(ctx: CanvasRenderingContext2D): void {
@@ -61,6 +85,10 @@ export class SRect implements Shape {
         this.rect = r;
         this.lineStyle = lineStyle;
         
+    }
+
+    isHit(_pt: SPoint): boolean {
+        return false;
     }
 
     onPaint(ctx: CanvasRenderingContext2D): void {
@@ -89,6 +117,10 @@ export class SEllipse implements Shape {
 
     }
 
+    isHit(_pt: SPoint): boolean {
+        return false;
+    }
+
     onPaint(ctx: CanvasRenderingContext2D): void {
         ctx.lineWidth = this.lineStyle.lineWidth;
         ctx.strokeStyle = this.lineStyle.lineColor;
@@ -109,6 +141,17 @@ export class SPath implements Shape {
         this.lineStyle = lineStyle;
     }
 
+    isHit(pt: SPoint): boolean {
+        let lastIdx = this.points.length - 1;
+        for (let i = 0; i < lastIdx -1; i ++) {
+            if (isHitLine(pt, this.points[i], this.points[i+1], this.lineStyle.lineWidth)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     onPaint(ctx: CanvasRenderingContext2D): void {
         ctx.lineWidth = this.lineStyle.lineWidth;
         ctx.strokeStyle = this.lineStyle.lineColor;
@@ -126,6 +169,11 @@ export class SPath implements Shape {
     }
 }
 
+type HitResult = {
+    hit: boolean;
+    shape: Shape | null;
+}
+
 class SPaintDoc {
     shapes: Shape[] = [];
   
@@ -138,6 +186,17 @@ class SPaintDoc {
       for (let i = 0; i < n; i ++) {
         this.shapes[i].onPaint(ctx);
       }
+    }
+
+    hitTest(pt: SPoint): HitResult {
+        for (let shape of this.shapes) {
+            let isHit = shape.isHit(pt);
+            if (isHit) {
+                return {hit:true, shape: shape}
+            } 
+        }
+
+        return {hit: false, shape: null};
     }
   }
 

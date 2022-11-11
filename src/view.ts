@@ -80,6 +80,8 @@ class SView {
 
         this._currentKey = "";
         this._current = null;
+
+        this.invokeController("ShapeSelector");
     }
 
     _setCurrent(name: string, controller: SController) {
@@ -138,6 +140,10 @@ class SView {
 
         this.onPaint(ctx);
 
+    }
+
+    onControllerReset() {
+        this.invokeController("ShapeSelector");
     }
 }
 

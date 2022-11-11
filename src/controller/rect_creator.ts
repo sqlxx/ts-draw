@@ -25,6 +25,8 @@ class RectCreator implements SController {
             pt1: {x: 0, y: 0},
             pt2: {x: 0, y: 0}
         } 
+
+        this.view.onControllerReset();
     }
     start(): void {
         let ctrl = this;

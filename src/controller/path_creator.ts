@@ -52,6 +52,8 @@ class PathCreator implements SController {
             this.view.doc.addShape(this.buildShape());
             this.points = [];
             this.view.invalidate();
+
+            this.view.onControllerReset();
         }
     }
     onMouseMove(event: Event): void {
