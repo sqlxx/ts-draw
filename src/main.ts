@@ -1,6 +1,6 @@
 import PathCreator from './controller/path_creator';
 import RectCreator from './controller/rect_creator';
-import { installController, installMousePos } from './menu';
+import { installController, installMousePos, installStyleConfig } from './menu';
 import SView from './view';
 
 var view = new SView();
@@ -13,3 +13,4 @@ view.registerController("PathCreator", new PathCreator(view));
 console.log("controllers registered");
 installController(view);
 installMousePos(view);
+installStyleConfig(view);
