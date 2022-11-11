@@ -11,3 +11,5 @@ interface SController {
     start():void;
 }
 
+export default SController;
+

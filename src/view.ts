@@ -1,5 +1,5 @@
 import SPaintDoc,{SPoint, SLineStyle}  from "./dom";
-import SController from "./creator/rect_creator";
+import SController from "./controller";
 
 class SView {
     properties = {lineWidth: 1, lineColor: "black"};
@@ -94,7 +94,7 @@ class SView {
         }
     }
 
-    registerController(name:string, controller:SController) {
+    registerController(name:string, controller: SController) {
         if (this.controllers.has(name)) {
             alert("Controller exists: " + name);
         } else {
