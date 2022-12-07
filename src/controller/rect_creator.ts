@@ -1,6 +1,7 @@
 import SView from "../view";
-import {RegionByPts, Shape, SRect, SEllipse, RegionByHW, SLine} from "../dom";
+import {RegionByPts, Shape, SRect, SEllipse, SLine} from "../dom";
 import SController from ".";
+import { normalizeRect } from "../util";
 
 // Support create rectangle, circle, ellipse
 class RectCreator implements SController {
@@ -74,18 +75,18 @@ class RectCreator implements SController {
             case "line":
                 return new SLine(this.rect.pt1, this.rect.pt2, this.view.lineStyle);
             case "rect": { 
-                let rectByWH = this.normalizeRect(this.rect);
+                let rectByWH = normalizeRect(this.rect);
                 return new SRect(rectByWH, this.view.lineStyle);
             }
             case "ellipse": {
-                let rectByWH = this.normalizeRect(this.rect);
+                let rectByWH = normalizeRect(this.rect);
                 let center = {x: rectByWH.x + rectByWH.width/2, y: rectByWH.y + rectByWH.height/2};
                 let radiusX = rectByWH.width/2;
                 let radiusY = rectByWH.height/2;
                 return new SEllipse(center, radiusX, radiusY, this.view.lineStyle);
             }
             case "circle": {
-                let rectByWH = this.normalizeRect(this.rect);
+                let rectByWH = normalizeRect(this.rect);
                 let center = {x: rectByWH.x + rectByWH.width/2, y: rectByWH.y + rectByWH.height/2};
                 let radius = rectByWH.width/2;
                 return new SEllipse(center, radius, radius, this.view.lineStyle);
@@ -96,26 +97,6 @@ class RectCreator implements SController {
 
     }
 
-    normalizeRect(rectByPts: RegionByPts): RegionByHW {
-        let x = rectByPts.pt1.x;
-        let y = rectByPts.pt1.y;
-
-        let width = rectByPts.pt2.x - x;
-        let height = rectByPts.pt2.y - y;
-
-        if (width < 0) {
-            x = rectByPts.pt2.x;
-            width = - width;
-        }
-
-        if (height < 0) {
-            y = rectByPts.pt2.y;
-            height = -height;
-        }
-
-        return {x: x, y: y, width: width, height: height};
-
-    }
 
     stop(): void {
         this.view.onMouseUp = null;

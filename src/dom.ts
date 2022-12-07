@@ -1,3 +1,5 @@
+import { normalizeRect } from "./util";
+
 export type SPoint = { 
     x: number;
     y: number;
@@ -6,6 +8,7 @@ export type SPoint = {
 export interface Shape {
     onPaint(ctx: CanvasRenderingContext2D): void;
     isHit(pt:SPoint):boolean;
+    getBound():RegionByHW | null;
 }
 
 export type RegionByHW = {
@@ -62,6 +65,9 @@ export class SLine implements Shape {
         this.pt2 = pt2;
         this.lineStyle = lineStyle;
     }
+    getBound(): RegionByHW {
+        return normalizeRect({pt1: this.pt1, pt2:this.pt2});
+    }
     isHit(pt: SPoint): boolean {
         return isHitLine(pt, this.pt1, this.pt2, this.lineStyle.lineWidth);
     }
@@ -86,9 +92,12 @@ export class SRect implements Shape {
         this.lineStyle = lineStyle;
         
     }
+    getBound(): RegionByHW {
+        return this.rect;
+    }
 
-    isHit(_pt: SPoint): boolean {
-        return false;
+    isHit(pt: SPoint): boolean {
+        return pt.x >= this.rect.x && pt.x <= this.rect.x + this.rect.width && pt.y >= this.rect.y && pt.y <= this.rect.y + this.rect.height
     }
 
     onPaint(ctx: CanvasRenderingContext2D): void {
@@ -116,6 +125,9 @@ export class SEllipse implements Shape {
         this.lineStyle = lineStyle;
 
     }
+    getBound(): RegionByHW {
+        return {x: this.center.x - this.radiusX, y: this.center.y - this.radiusY, width: this.radiusX*2, height: this.radiusY*2}
+    }
 
     isHit(_pt: SPoint): boolean {
         return false;
@@ -139,6 +151,37 @@ export class SPath implements Shape {
     constructor(points: SPoint[], lineStyle: SShapeStyle) {
         this.points = points;
         this.lineStyle = lineStyle;
+    }
+
+    getBound(): RegionByHW | null {
+        let n = this.points.length;
+        if (n <= 1) {
+            return null;
+        }
+
+        let pt1: SPoint = {x:0, y:0};
+        pt1.x = this.points[0].x;
+        pt1.y = this.points[0].y;
+        let pt2: SPoint = {x:0, y:0}; 
+        for (let i = 1; i < n; i ++) {
+            if (this.points[i].x < pt1.x) {
+                pt1.x = this.points[i].x;
+            } 
+
+            if (this.points[i].x > pt2.x) {
+                pt2.x = this.points[i].x;
+            }
+
+            if (this.points[i].y < pt1.y) {
+                pt1.y = this.points[i].y;
+            }
+
+            if (this.points[i].y > pt2.y) {
+                pt2.y = this.points[i].y;
+            }
+
+        }
+        return normalizeRect({pt1: pt1, pt2: pt2});
     }
 
     isHit(pt: SPoint): boolean {
@@ -201,3 +244,4 @@ class SPaintDoc {
   }
 
   export default SPaintDoc;
+  

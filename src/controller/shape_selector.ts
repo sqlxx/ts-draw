@@ -1,19 +1,44 @@
 import SController from ".";
+import { Shape, SPoint } from "../dom";
 // import { Shape } from "../dom";
 import SView from "../view";
 
 class ShapeSelector implements SController {
 
     private moving: boolean = false;
-    // private selection: Shape;
+    private selection: Shape | null = null;
     private view: SView;
+    private mousePos: SPoint = {x:0, y:0};
+    private offsetX: number = 0;
+    private offsetY: number = 0;
 
     constructor(view: SView) {
         this.view = view;
     }
 
-    onPaint(_ctx: CanvasRenderingContext2D): void {
-        throw new Error("Method not implemented.");
+    onPaint(ctx: CanvasRenderingContext2D): void {
+
+        if (this.selection != null) {
+
+            let selectRegion = this.selection.getBound();
+
+            if (selectRegion!= null) {
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "gray";
+                ctx.setLineDash([2, 2]);
+
+                ctx.beginPath();
+                ctx.rect(this.mousePos.x, this.mousePos.y, selectRegion.width, selectRegion.height);
+                ctx.stroke();
+
+                ctx.setLineDash([]);
+
+            } else {
+                console.log('select region is null, should not happen');
+            }
+
+        }
+
     }
 
     onDblClick(_event: Event): void {
@@ -24,19 +49,38 @@ class ShapeSelector implements SController {
 
         if (!this.moving) {
             let hitResult = this.view.doc.hitTest(pt);
+            console.log(hitResult);
             if (hitResult.hit) {
                 this.view.drawing.style.cursor = "move"
             } else {
                 this.view.drawing.style.cursor = "auto"
             }
         } else {
+
+            this.mousePos = {x: pt.x - this.offsetX, y: pt.y - this.offsetY};
+            this.view.invalidate();
         }
     }
     onMouseUp(_event: Event): void {
-        throw new Error("Method not implemented.");
+        // TODO: add the actual move action
+        this.selection = null;
+        this.moving = false;
+        this.view.invalidate();
     }
     onMouseDown(_event: Event): void {
-        throw new Error("Method not implemented.");
+        const pt = this.view.getMousePos(event as MouseEvent);
+
+        let hitResult = this.view.doc.hitTest(pt);
+        console.log(hitResult);
+        if (hitResult.hit) {
+            this.selection = hitResult.shape;
+
+            let bound = hitResult.shape!.getBound()!;
+            this.offsetX = pt.x - bound.x;
+            this.offsetY = pt.y - bound.y;
+
+        }
+        this.moving = true;
     }
     onKeyDown(_event: Event): void {
         throw new Error("Method not implemented.");
