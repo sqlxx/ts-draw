@@ -7,8 +7,9 @@ export type SPoint = {
 
 export interface Shape {
     onPaint(ctx: CanvasRenderingContext2D): void;
-    isHit(pt:SPoint):boolean;
-    getBound():RegionByHW | null;
+    isHit(pt:SPoint): boolean;
+    getBound(): RegionByHW | null;
+    move(dx:number, dy:number): void;
 }
 
 export type RegionByHW = {
@@ -65,6 +66,9 @@ export class SLine implements Shape {
         this.pt2 = pt2;
         this.lineStyle = lineStyle;
     }
+    move(dx: number, dy: number): void {
+        this.pt1 = {x: this.pt1.x + dx, y: this.pt1.y + dy};
+    }
     getBound(): RegionByHW {
         return normalizeRect({pt1: this.pt1, pt2:this.pt2});
     }
@@ -91,6 +95,10 @@ export class SRect implements Shape {
         this.rect = r;
         this.lineStyle = lineStyle;
         
+    }
+    move(dx: number, dy: number): void {
+        this.rect.x = this.rect.x + dx;
+        this.rect.y = this.rect.y + dy;
     }
     getBound(): RegionByHW {
         return this.rect;
@@ -125,6 +133,10 @@ export class SEllipse implements Shape {
         this.lineStyle = lineStyle;
 
     }
+    move(dx: number, dy: number): void {
+        this.center.x = this.center.x + dx;
+        this.center.y = this.center.y + dy;
+    }
     getBound(): RegionByHW {
         return {x: this.center.x - this.radiusX, y: this.center.y - this.radiusY, width: this.radiusX*2, height: this.radiusY*2}
     }
@@ -153,6 +165,12 @@ export class SPath implements Shape {
     constructor(points: SPoint[], lineStyle: SShapeStyle) {
         this.points = points;
         this.lineStyle = lineStyle;
+    }
+    move(dx: number, dy: number): void {
+        for (let point of this.points) {
+            point.x = point.x + dx;
+            point.y = point.y + dy;
+        }
     }
 
     getBound(): RegionByHW | null {

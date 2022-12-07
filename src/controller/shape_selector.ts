@@ -61,11 +61,19 @@ class ShapeSelector implements SController {
             this.view.invalidate();
         }
     }
-    onMouseUp(_event: Event): void {
-        // TODO: add the actual move action
-        this.selection = null;
-        this.moving = false;
-        this.view.invalidate();
+    onMouseUp(event: Event): void {
+        if (this.selection != null && this.moving) {
+            const pt = this.view.getMousePos(event as MouseEvent);
+            let bound = this.selection!.getBound();
+            let dx = pt.x - this.offsetX - bound!.x;
+            let dy = pt.y - this.offsetY - bound!.y;
+
+            this.selection.move(dx, dy);
+            this.moving = false;
+
+            this.selection = null;
+            this.view.invalidate();
+        }
     }
     onMouseDown(_event: Event): void {
         const pt = this.view.getMousePos(event as MouseEvent);
