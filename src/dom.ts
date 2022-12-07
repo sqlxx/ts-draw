@@ -129,8 +129,10 @@ export class SEllipse implements Shape {
         return {x: this.center.x - this.radiusX, y: this.center.y - this.radiusY, width: this.radiusX*2, height: this.radiusY*2}
     }
 
-    isHit(_pt: SPoint): boolean {
-        return false;
+    isHit(pt: SPoint): boolean {
+        let dx = pt.x - this.center.x
+        let dy = pt.y - this.center.y
+        return (dx*dx/this.radiusX/this.radiusX + dy*dy/this.radiusY/this.radiusY) <= 1
     }
 
     onPaint(ctx: CanvasRenderingContext2D): void {
